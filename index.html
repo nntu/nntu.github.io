@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<title>Nhập thông tin người phụ thuộc</title>
+	<link rel="stylesheet" href="./styles.css">
+	<meta name="theme-color" content="#2563eb">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body>
+	<div class="container">
+		<h1>Nhập thông tin người phụ thuộc</h1>
+
+		<form id="dependents-form">
+			<section class="card">
+				<h2>Thông tin cán bộ</h2>
+				<div class="grid">
+					<label class="field">
+						<span>Họ và tên cán bộ <span class="req">*</span></span>
+						<input type="text" id="staffFullName" name="staffFullName" placeholder="VD: Nguyễn Văn A" required>
+					</label>
+					<label class="field">
+						<span>Mã cán bộ</span>
+						<input type="text" id="staffCode" name="staffCode" placeholder="VD: CB00123">
+					</label>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="section-header">
+					<h2>Người phụ thuộc</h2>
+					<button type="button" id="addDependentBtn" class="btn btn-secondary">+ Thêm người phụ thuộc</button>
+				</div>
+				<div id="dependentsContainer"></div>
+			</section>
+
+			<div class="actions">
+				<button type="submit" class="btn btn-primary" id="submitBtn">Gửi thông tin</button>
+			</div>
+			<p id="statusMessage" class="status" role="alert" aria-live="polite"></p>
+		</form>
+	</div>
+
+	<!-- Modal xem lại dữ liệu trước khi gửi -->
+	<div id="previewModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+		<div class="modal-backdrop" data-close="true"></div>
+		<div class="modal-content" role="document">
+			<div class="modal-header">
+				<h2 id="previewTitle">Xem lại thông tin</h2>
+				<button type="button" class="btn btn-sm btn-secondary" id="closePreviewBtn">Đóng</button>
+			</div>
+			<div class="modal-body">
+				<div class="card">
+					<h3>Thông tin cán bộ</h3>
+					<div id="previewStaff"></div>
+				</div>
+				<div class="card">
+					<h3>Danh sách người phụ thuộc</h3>
+					<div id="previewDependents"></div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" id="editBackBtn">Quay lại chỉnh sửa</button>
+				<button type="button" class="btn btn-primary" id="confirmSendBtn">Xác nhận gửi</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="./config.js"></script>
+	<script src="./app.js"></script>
+</body>
+</html> 
