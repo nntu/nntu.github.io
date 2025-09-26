@@ -1,36 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StaffForm from './components/StaffForm';
 import DependentsList from './components/DependentsList';
 import PreviewModal from './components/PreviewModal';
+import ResultModal from './components/ResultModal';
 import './App.css';
 
 function App() {
-  const [staffData, setStaffData] = useState({
-    fullName: '',
-    code: '',
-    taxCode: '',
-    cccd: ''
+  const [staffData, setStaffData] = useState(() => {
+    try {
+      const savedStaffData = localStorage.getItem('nnttu-staffData');
+      return savedStaffData ? JSON.parse(savedStaffData) : {
+        fullName: '',
+        code: '',
+        cccd: ''
+      };
+    } catch (error) {
+      console.error("Failed to parse staffData from localStorage", error);
+      return {
+        fullName: '',
+        code: '',
+        cccd: ''
+      };
+    }
   });
   
-  const [dependents, setDependents] = useState([{
-    fullName: '',
-    dob: '',
-    relationship: '',
-    cccd: '',
-    street: '',
-    ward: '',
-    cityProvince: ''
-  }]);
+  const [dependents, setDependents] = useState(() => {
+    try {
+      const savedDependents = localStorage.getItem('nnttu-dependents');
+      return savedDependents ? JSON.parse(savedDependents) : [{
+        fullName: '',
+        dob: '',
+        relationship: '',
+        deductionStartDate: '',
+        cccd: '',
+        street: '',
+        ward: '',
+        cityProvince: ''
+      }];
+    } catch (error) {
+      console.error("Failed to parse dependents from localStorage", error);
+      return [{
+        fullName: '',
+        dob: '',
+        relationship: '',
+        deductionStartDate: '',
+        cccd: '',
+        street: '',
+        ward: '',
+        cityProvince: ''
+      }];
+    }
+  });
+
+  // Effect to save data to localStorage
+  useEffect(() => {
+    localStorage.setItem('nnttu-staffData', JSON.stringify(staffData));
+  }, [staffData]);
+
+  useEffect(() => {
+    localStorage.setItem('nnttu-dependents', JSON.stringify(dependents));
+  }, [dependents]);
   
   const [showPreview, setShowPreview] = useState(false);
   const [status, setStatus] = useState({ message: '', type: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [result, setResult] = useState({ type: '', message: '', details: null });
 
   const addDependent = () => {
     setDependents([...dependents, {
       fullName: '',
       dob: '',
       relationship: '',
+      deductionStartDate: '',
       cccd: '',
       street: '',
       ward: '',
@@ -69,6 +111,7 @@ function App() {
       HotenNPT: dep.fullName,
       NgaySinh_NPT: convertDateFormat(dep.dob),
       QuanHe: dep.relationship,
+      ThoiDiemGiamTru: dep.deductionStartDate,
       CCCD_NPT: dep.cccd,
       SoNha: dep.street,
       PHuongXa: dep.ward,
@@ -78,7 +121,6 @@ function App() {
     return {
       TenCB: staffData.fullName,
       MACB: staffData.code,
-      MaSoThue: staffData.taxCode,
       CCCD_CB: staffData.cccd,
       NguoiPhuThuoc: processedDependents,
       submittedAt: new Date().toISOString()
@@ -112,7 +154,6 @@ function App() {
     // Check all staff fields are required
     if (!staffData.fullName.trim()) return false;
     if (!staffData.code.trim()) return false;
-    if (!staffData.taxCode.trim()) return false;
     if (!staffData.cccd.trim()) return false;
     
     // Check all dependents have required fields
@@ -120,6 +161,7 @@ function App() {
       dep.fullName.trim() && 
       validateDate(dep.dob) &&
       dep.relationship.trim() &&
+      dep.deductionStartDate.trim() &&
       dep.cccd.trim() && 
       dep.street.trim() && 
       dep.ward.trim() && 
@@ -161,42 +203,217 @@ function App() {
 
   const handleConfirmSend = async () => {
     const data = collectFormData();
+    
+    // Log request data for debugging
+    console.log('Sending data to webhook:', data);
+    console.log('Webhook URL:', getWebhookUrl());
+    
     try {
       setIsSubmitting(true);
       const res = await submitToWebhook(data);
+      
+      // Log response details for debugging
+      console.log('Response Status:', res.status);
+      console.log('Response Headers:', Object.fromEntries(res.headers.entries()));
+      
       if (res.ok) {
         try {
           const responseData = await res.json();
-          if (responseData.status === 'ok' && responseData.message) {
-            setStatus({ message: responseData.message, type: 'success' });
+          console.log('Response Data:', responseData);
+          
+          // Check response status and message
+          if (responseData.status === 'ok' || responseData.status === 'success') {
+            const message = responseData.message || 'Gửi thành công! Cảm ơn bạn.';
+            setResult({ 
+              type: 'success', 
+              message: message, 
+              details: { 
+                status: res.status, 
+                responseData: responseData,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          } else if (responseData.status === 'error') {
+            const message = responseData.message || 'Có lỗi xảy ra khi xử lý dữ liệu.';
+            setResult({ 
+              type: 'error', 
+              message: message, 
+              details: { 
+                status: res.status, 
+                responseData: responseData,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
           } else {
-            setStatus({ message: 'Gửi thành công! Cảm ơn bạn.', type: 'success' });
+            // Response có data nhưng không có status rõ ràng
+            const message = responseData.message || 'Dữ liệu đã được gửi thành công.';
+            setResult({ 
+              type: 'success', 
+              message: message, 
+              details: { 
+                status: res.status, 
+                responseData: responseData,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
           }
         } catch (parseError) {
-          setStatus({ message: 'Gửi thành công! Cảm ơn bạn.', type: 'success' });
+          console.log('JSON Parse Error:', parseError);
+          // Nếu không parse được JSON, kiểm tra response text
+          try {
+            const responseText = await res.text();
+            console.log('Response Text:', responseText);
+            setResult({ 
+              type: 'success', 
+              message: responseText || 'Gửi thành công! Cảm ơn bạn.', 
+              details: { 
+                status: res.status, 
+                responseText: responseText,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          } catch (textError) {
+            console.log('Text Parse Error:', textError);
+            setResult({ 
+              type: 'success', 
+              message: 'Gửi thành công! Cảm ơn bạn.', 
+              details: { 
+                status: res.status, 
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          }
         }
         
         // Reset form
-        setStaffData({ fullName: '', code: '', taxCode: '', cccd: '' });
+        setStaffData({ fullName: '', code: '', cccd: '' });
         setDependents([{
           fullName: '',
           dob: '',
           relationship: '',
+          deductionStartDate: '',
           cccd: '',
           street: '',
           ward: '',
           cityProvince: ''
         }]);
         setShowPreview(false);
+
+        // Clear cache on successful submission
+        localStorage.removeItem('nnttu-staffData');
+        localStorage.removeItem('nnttu-dependents');
       } else {
-        const text = await res.text().catch(() => '');
-        setStatus({ 
-          message: `Gửi thất bại (${res.status}). ${text || 'Vui lòng thử lại.'}`, 
-          type: 'error' 
-        });
+        // Handle error responses
+        console.log('Error Response Status:', res.status);
+        
+        try {
+          const responseData = await res.json();
+          console.log('Error Response Data:', responseData);
+          
+          // Check if server provides error message
+          if (responseData.message) {
+            setResult({ 
+              type: 'error', 
+              message: `Lỗi ${res.status}: ${responseData.message}`, 
+              details: { 
+                status: res.status, 
+                responseData: responseData,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          } else if (responseData.error) {
+            setResult({ 
+              type: 'error', 
+              message: `Lỗi ${res.status}: ${responseData.error}`, 
+              details: { 
+                status: res.status, 
+                responseData: responseData,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          } else {
+            setResult({ 
+              type: 'error', 
+              message: `Lỗi ${res.status}: ${responseData.status || 'Có lỗi xảy ra từ server'}`, 
+              details: { 
+                status: res.status, 
+                responseData: responseData,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          }
+        } catch (parseError) {
+          // If can't parse JSON, try to get text
+          try {
+            const responseText = await res.text();
+            console.log('Error Response Text:', responseText);
+            setResult({ 
+              type: 'error', 
+              message: `Lỗi ${res.status}: ${responseText || 'Vui lòng thử lại.'}`, 
+              details: { 
+                status: res.status, 
+                responseText: responseText,
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          } catch (textError) {
+            console.log('Error Text Parse Error:', textError);
+            setResult({ 
+              type: 'error', 
+              message: `Lỗi ${res.status}: Không thể kết nối đến server. Vui lòng thử lại.`, 
+              details: { 
+                status: res.status, 
+                timestamp: new Date().toLocaleString('vi-VN')
+              }
+            });
+            setShowResult(true);
+          }
+        }
       }
     } catch (err) {
-      setStatus({ message: `Lỗi khi gửi dữ liệu: ${err.message}`, type: 'error' });
+      console.log('Network/Request Error:', err);
+      
+      // Handle different types of errors
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setResult({ 
+          type: 'error', 
+          message: 'Lỗi kết nối: Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet và thử lại.', 
+          details: { 
+            error: err.message,
+            timestamp: new Date().toLocaleString('vi-VN')
+          }
+        });
+        setShowResult(true);
+      } else if (err.name === 'AbortError') {
+        setResult({ 
+          type: 'error', 
+          message: 'Yêu cầu đã bị hủy. Vui lòng thử lại.', 
+          details: { 
+            error: err.message,
+            timestamp: new Date().toLocaleString('vi-VN')
+          }
+        });
+        setShowResult(true);
+      } else {
+        setResult({ 
+          type: 'error', 
+          message: `Lỗi khi gửi dữ liệu: ${err.message || 'Có lỗi không xác định xảy ra.'}`, 
+          details: { 
+            error: err.message,
+            timestamp: new Date().toLocaleString('vi-VN')
+          }
+        });
+        setShowResult(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -239,12 +456,6 @@ function App() {
             {isSubmitting ? 'Đang gửi...' : 'Gửi thông tin'}
           </button>
         </div>
-        
-        {status.message && (
-          <p className={`status ${status.type}`} role="alert" aria-live="polite">
-            {status.message}
-          </p>
-        )}
       </form>
 
       <PreviewModal
@@ -254,6 +465,12 @@ function App() {
         staffData={staffData}
         dependents={dependents}
         isSubmitting={isSubmitting}
+      />
+
+      <ResultModal
+        show={showResult}
+        onClose={() => setShowResult(false)}
+        result={result}
       />
     </div>
   );

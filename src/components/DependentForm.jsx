@@ -6,6 +6,19 @@ function DependentForm({ index, dependent, updateDependent, removeDependent }) {
     updateDependent(index, field, value);
   };
 
+  const handleDateChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    const month = rawValue.slice(0, 2);
+    const year = rawValue.slice(2, 6);
+
+    let formattedValue = month;
+    if (rawValue.length > 2) {
+      formattedValue += '/' + year;
+    }
+    
+    updateDependent(index, 'deductionStartDate', formattedValue);
+  };
+
   return (
     <div className="dependent card subtle">
       <div className="dependent-header">
@@ -69,8 +82,9 @@ function DependentForm({ index, dependent, updateDependent, removeDependent }) {
             <option value="Khác">Khác</option>
           </select>
         </label>
+      
         <label className="field">
-          <span>CCCD <span className="req">*</span></span>
+          <span>CCCD/Số định danh <span className="req">*</span></span>
           <input 
             type="text" 
             value={dependent.cccd}
@@ -109,6 +123,16 @@ function DependentForm({ index, dependent, updateDependent, removeDependent }) {
             value={dependent.cityProvince}
             onChange={(e) => handleChange('cityProvince', e.target.value)}
             placeholder="VD: Cần tho" 
+            required
+          />
+        </label>  <label className="field">
+          <span>Thời điểm bắt đầu giảm trừ (mm/yyyy) <span className="req">*</span></span>
+          <input 
+            type="text" 
+            value={dependent.deductionStartDate || ''}
+            onChange={handleDateChange}
+            placeholder="mm/yyyy" 
+            maxLength="7"
             required
           />
         </label>

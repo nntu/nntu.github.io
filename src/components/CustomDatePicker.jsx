@@ -170,8 +170,6 @@ function CustomDatePicker({ value, onChange, required = false }) {
         type="text"
         value={displayValue}
         onChange={handleManualInput}
-        onBlur={handleBlur}
-        onFocus={() => setIsOpen(true)}
         placeholder="dd/mm/yyyy"
         required={required}
         style={{
@@ -291,7 +289,6 @@ function CustomDatePicker({ value, onChange, required = false }) {
                   background: day ? '#fff' : 'transparent',
                   cursor: day ? 'pointer' : 'default',
                   fontSize: '14px',
-                  color: day ? '#111827' : 'transparent',
                   borderRadius: '4px',
                   fontWeight: isToday(day) ? '600' : 'normal',
                   backgroundColor: day 

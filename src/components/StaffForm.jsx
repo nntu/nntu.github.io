@@ -33,16 +33,6 @@ function StaffForm({ staffData, setStaffData }) {
           />
         </label>
         <label className="field">
-          <span>Mã số thuế <span className="req">*</span></span>
-          <input 
-            type="text" 
-            value={staffData.taxCode}
-            onChange={(e) => handleChange('taxCode', e.target.value)}
-            placeholder="VD: 0123456789"
-            required
-          />
-        </label>
-        <label className="field">
           <span>CCCD <span className="req">*</span></span>
           <input 
             type="text" 

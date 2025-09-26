@@ -37,8 +37,6 @@ function PreviewModal({ show, onClose, onConfirm, staffData, dependents, isSubmi
               <div>{staffData.fullName || ''}</div>
               <div><strong>Mã cán bộ</strong></div>
               <div>{staffData.code || ''}</div>
-              <div><strong>Mã số thuế</strong></div>
-              <div>{staffData.taxCode || ''}</div>
               <div><strong>CCCD</strong></div>
               <div>{staffData.cccd || ''}</div>
             </div>
@@ -55,6 +53,8 @@ function PreviewModal({ show, onClose, onConfirm, staffData, dependents, isSubmi
                   <div>{dependent.dob || ''}</div>
                   <div><strong>Quan hệ</strong></div>
                   <div>{dependent.relationship || ''}</div>
+                  <div><strong>Thời điểm bắt đầu giảm trừ</strong></div>
+                  <div>{dependent.deductionStartDate || ''}</div>
                   <div><strong>CCCD</strong></div>
                   <div>{dependent.cccd || ''}</div>
                   <div><strong>Địa chỉ</strong></div>
