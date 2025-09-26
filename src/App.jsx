@@ -204,216 +204,70 @@ function App() {
   const handleConfirmSend = async () => {
     const data = collectFormData();
     
-    // Log request data for debugging
     console.log('Sending data to webhook:', data);
     console.log('Webhook URL:', getWebhookUrl());
     
     try {
       setIsSubmitting(true);
+      setShowPreview(false); // Close preview modal immediately
       const res = await submitToWebhook(data);
       
-      // Log response details for debugging
       console.log('Response Status:', res.status);
-      console.log('Response Headers:', Object.fromEntries(res.headers.entries()));
       
       if (res.ok) {
-        try {
-          const responseData = await res.json();
-          console.log('Response Data:', responseData);
-          
-          // Check response status and message
-          if (responseData.status === 'ok' || responseData.status === 'success') {
-            const message = responseData.message || 'Gửi thành công! Cảm ơn bạn.';
-            setResult({ 
-              type: 'success', 
-              message: message, 
-              details: { 
-                status: res.status, 
-                responseData: responseData,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          } else if (responseData.status === 'error') {
-            const message = responseData.message || 'Có lỗi xảy ra khi xử lý dữ liệu.';
-            setResult({ 
-              type: 'error', 
-              message: message, 
-              details: { 
-                status: res.status, 
-                responseData: responseData,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          } else {
-            // Response có data nhưng không có status rõ ràng
-            const message = responseData.message || 'Dữ liệu đã được gửi thành công.';
-            setResult({ 
-              type: 'success', 
-              message: message, 
-              details: { 
-                status: res.status, 
-                responseData: responseData,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          }
-        } catch (parseError) {
-          console.log('JSON Parse Error:', parseError);
-          // Nếu không parse được JSON, kiểm tra response text
-          try {
-            const responseText = await res.text();
-            console.log('Response Text:', responseText);
-            setResult({ 
-              type: 'success', 
-              message: responseText || 'Gửi thành công! Cảm ơn bạn.', 
-              details: { 
-                status: res.status, 
-                responseText: responseText,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          } catch (textError) {
-            console.log('Text Parse Error:', textError);
-            setResult({ 
-              type: 'success', 
-              message: 'Gửi thành công! Cảm ơn bạn.', 
-              details: { 
-                status: res.status, 
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          }
-        }
-        
-        // Reset form
-        setStaffData({ fullName: '', code: '', cccd: '' });
-        setDependents([{
-          fullName: '',
-          dob: '',
-          relationship: '',
-          deductionStartDate: '',
-          cccd: '',
-          street: '',
-          ward: '',
-          cityProvince: ''
-        }]);
-        setShowPreview(false);
-
-        // Clear cache on successful submission
+        // On any successful response, clear the cache.
         localStorage.removeItem('nnttu-staffData');
         localStorage.removeItem('nnttu-dependents');
-      } else {
-        // Handle error responses
-        console.log('Error Response Status:', res.status);
-        
+
+        let responsePayload;
         try {
-          const responseData = await res.json();
-          console.log('Error Response Data:', responseData);
-          
-          // Check if server provides error message
-          if (responseData.message) {
-            setResult({ 
-              type: 'error', 
-              message: `Lỗi ${res.status}: ${responseData.message}`, 
-              details: { 
-                status: res.status, 
-                responseData: responseData,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          } else if (responseData.error) {
-            setResult({ 
-              type: 'error', 
-              message: `Lỗi ${res.status}: ${responseData.error}`, 
-              details: { 
-                status: res.status, 
-                responseData: responseData,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          } else {
-            setResult({ 
-              type: 'error', 
-              message: `Lỗi ${res.status}: ${responseData.status || 'Có lỗi xảy ra từ server'}`, 
-              details: { 
-                status: res.status, 
-                responseData: responseData,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          }
-        } catch (parseError) {
-          // If can't parse JSON, try to get text
+          responsePayload = await res.json();
+          console.log('Response Data:', responsePayload);
+        } catch (e) {
           try {
-            const responseText = await res.text();
-            console.log('Error Response Text:', responseText);
-            setResult({ 
-              type: 'error', 
-              message: `Lỗi ${res.status}: ${responseText || 'Vui lòng thử lại.'}`, 
-              details: { 
-                status: res.status, 
-                responseText: responseText,
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
-          } catch (textError) {
-            console.log('Error Text Parse Error:', textError);
-            setResult({ 
-              type: 'error', 
-              message: `Lỗi ${res.status}: Không thể kết nối đến server. Vui lòng thử lại.`, 
-              details: { 
-                status: res.status, 
-                timestamp: new Date().toLocaleString('vi-VN')
-              }
-            });
-            setShowResult(true);
+            responsePayload = await res.text();
+            console.log('Response Text:', responsePayload);
+          } catch (e) {
+            responsePayload = 'No response body';
           }
         }
+
+        const successMessage = (typeof responsePayload === 'object' && responsePayload.message) 
+                               ? responsePayload.message 
+                               : (typeof responsePayload === 'string' && responsePayload)
+                                 ? responsePayload
+                                 : 'Gửi thành công! Cảm ơn bạn.';
+
+        setResult({ type: 'success', message: successMessage, details: { status: res.status, response: responsePayload } });
+        setShowResult(true);
+
+      } else { // res.ok is false
+        let errorPayload;
+        try {
+          errorPayload = await res.json();
+          console.log('Error Response Data:', errorPayload);
+        } catch (e) {
+          try {
+            errorPayload = await res.text();
+             console.log('Error Response Text:', errorPayload);
+          } catch (e) {
+            errorPayload = 'Could not read error response.';
+          }
+        }
+        
+        const errorMessage = (typeof errorPayload === 'object' && (errorPayload.message || errorPayload.error))
+                             ? (errorPayload.message || errorPayload.error)
+                             : (typeof errorPayload === 'string' && errorPayload)
+                               ? errorPayload
+                               : 'Có lỗi xảy ra từ server.';
+
+        setResult({ type: 'error', message: `Lỗi ${res.status}: ${errorMessage}`, details: { status: res.status, response: errorPayload } });
+        setShowResult(true);
       }
     } catch (err) {
       console.log('Network/Request Error:', err);
-      
-      // Handle different types of errors
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        setResult({ 
-          type: 'error', 
-          message: 'Lỗi kết nối: Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet và thử lại.', 
-          details: { 
-            error: err.message,
-            timestamp: new Date().toLocaleString('vi-VN')
-          }
-        });
-        setShowResult(true);
-      } else if (err.name === 'AbortError') {
-        setResult({ 
-          type: 'error', 
-          message: 'Yêu cầu đã bị hủy. Vui lòng thử lại.', 
-          details: { 
-            error: err.message,
-            timestamp: new Date().toLocaleString('vi-VN')
-          }
-        });
-        setShowResult(true);
-      } else {
-        setResult({ 
-          type: 'error', 
-          message: `Lỗi khi gửi dữ liệu: ${err.message || 'Có lỗi không xác định xảy ra.'}`, 
-          details: { 
-            error: err.message,
-            timestamp: new Date().toLocaleString('vi-VN')
-          }
-        });
-        setShowResult(true);
-      }
+      setResult({ type: 'error', message: `Lỗi mạng hoặc kết nối: ${err.message}`, details: { error: err.message } });
+      setShowResult(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -469,7 +323,12 @@ function App() {
 
       <ResultModal
         show={showResult}
-        onClose={() => setShowResult(false)}
+        onClose={() => {
+          setShowResult(false);
+          if (result.type === 'success') {
+            window.location.reload();
+          }
+        }}
         result={result}
       />
     </div>
