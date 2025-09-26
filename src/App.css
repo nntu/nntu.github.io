@@ -319,4 +319,36 @@ h3 { font-size: 18px; margin: 0; font-weight: 600; }
 		padding: 12px; 
 		border-radius: 10px;
 	}
-} 
+}
+
+/* Custom Date Picker */
+.custom-date-picker {
+	position: relative;
+	width: 100%;
+}
+
+.date-picker-dropdown {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: #fff;
+	border: 2px solid #e5e7eb;
+	border-radius: 12px;
+	box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+	z-index: 1000;
+	margin-top: 4px;
+}
+
+/* Mobile responsive for date picker */
+@media (max-width: 640px) {
+	.date-picker-dropdown {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 90vw;
+		max-width: 320px;
+		margin-top: 0;
+	}
+}
