@@ -53,6 +53,8 @@ function PreviewModal({ show, onClose, onConfirm, staffData, dependents, isSubmi
                 <div className="preview-kv">
                   <div><strong>Ngày sinh</strong></div>
                   <div>{dependent.dob || ''}</div>
+                  <div><strong>Quan hệ</strong></div>
+                  <div>{dependent.relationship || ''}</div>
                   <div><strong>CCCD</strong></div>
                   <div>{dependent.cccd || ''}</div>
                   <div><strong>Địa chỉ</strong></div>

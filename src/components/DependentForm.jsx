@@ -38,6 +38,38 @@ function DependentForm({ index, dependent, updateDependent, removeDependent }) {
           />
         </label>
         <label className="field">
+          <span>Quan hệ với người nộp thuế <span className="req">*</span></span>
+          <select
+            value={dependent.relationship}
+            onChange={(e) => handleChange('relationship', e.target.value)}
+            required
+            style={{
+              padding: '12px 16px',
+              border: '2px solid #d1d5db',
+              borderRadius: '10px',
+              fontSize: '16px',
+              outline: 'none',
+              transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+              background: '#fff',
+              width: '100%'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#2563eb';
+              e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.12)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#d1d5db';
+              e.target.style.boxShadow = 'none';
+            }}
+          >
+            <option value="">Chọn quan hệ</option>
+            <option value="Con">Con</option>
+            <option value="Vợ/Chồng">Vợ/Chồng</option>
+            <option value="Cha/Mẹ">Cha/Mẹ</option>
+            <option value="Khác">Khác</option>
+          </select>
+        </label>
+        <label className="field">
           <span>CCCD <span className="req">*</span></span>
           <input 
             type="text" 

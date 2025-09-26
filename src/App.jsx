@@ -15,6 +15,7 @@ function App() {
   const [dependents, setDependents] = useState([{
     fullName: '',
     dob: '',
+    relationship: '',
     cccd: '',
     street: '',
     ward: '',
@@ -29,6 +30,7 @@ function App() {
     setDependents([...dependents, {
       fullName: '',
       dob: '',
+      relationship: '',
       cccd: '',
       street: '',
       ward: '',
@@ -66,6 +68,7 @@ function App() {
     const processedDependents = dependents.map(dep => ({
       HotenNPT: dep.fullName,
       NgaySinh_NPT: convertDateFormat(dep.dob),
+      QuanHe: dep.relationship,
       CCCD_NPT: dep.cccd,
       SoNha: dep.street,
       PHuongXa: dep.ward,
@@ -116,6 +119,7 @@ function App() {
     return dependents.every(dep => 
       dep.fullName.trim() && 
       validateDate(dep.dob) &&
+      dep.relationship.trim() &&
       dep.cccd.trim() && 
       dep.street.trim() && 
       dep.ward.trim() && 
@@ -177,6 +181,7 @@ function App() {
         setDependents([{
           fullName: '',
           dob: '',
+          relationship: '',
           cccd: '',
           street: '',
           ward: '',
